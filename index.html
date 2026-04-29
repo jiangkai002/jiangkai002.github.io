@@ -8,7 +8,7 @@
     <meta name="description" content="江凯（JK）的个人网站：项目介绍与技术文章。">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="main.css">
 </head>
 
@@ -22,11 +22,8 @@
                 <a href="#projects">项目</a>
                 <a href="#articles">文章</a>
             </nav>
-            <a class="nav-github" href="https://github.com/jiangkai002" target="_blank" rel="noopener" aria-label="GitHub">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
-                </svg>
-                GitHub
+            <a class="nav-github" href="https://github.com/jiangkai002" target="_blank" rel="noopener">
+                GitHub ↗
             </a>
         </div>
     </header>
@@ -35,125 +32,140 @@
         <!-- ======= Hero ======= -->
         <section class="hero">
             <div class="container">
-                <div class="hero-inner">
-                    <div class="hero-avatar-wrap">
-                        <img src="assets/avatar.png" alt="JK 头像" class="hero-avatar" width="180" height="180">
-                    </div>
-                    <div class="hero-info">
-                        <h1 class="hero-name">JK</h1>
-                        <p class="hero-name-zh">江&thinsp;凯</p>
-                        <p class="hero-bio">土木狗毕业，程序员生涯总结</p>
-                        <p class="hero-role">FULLSTACK ENGINEER</p>
-                    </div>
+                <p class="hero-eyebrow">FULLSTACK ENGINEER</p>
+                <div class="hero-title-row">
+                    <img src="assets/avatar.png" alt="JK 头像" class="hero-avatar" width="96" height="96">
+                    <h1 class="hero-name">JK</h1>
+                </div>
+                <p class="hero-bio">江&thinsp;凯 · 土木狗毕业，程序员生涯总结</p>
+                <div class="hero-stack">
+                    <span>Vue 3</span>
+                    <span>React</span>
+                    <span>FastAPI</span>
+                    <span>Python</span>
+                    <span>TypeScript</span>
+                    <span>Docker</span>
+                    <span>PostgreSQL</span>
                 </div>
             </div>
         </section>
 
         <!-- ======= Projects ======= -->
-        <section id="projects" class="section reveal">
+        <section id="projects" class="section">
             <div class="container">
-                <h2 class="section-title">项目</h2>
-                <div class="cards">
-                    <article class="card reveal">
-                        <div class="card-top">
-                            <span class="card-icon">🚀</span>
-                            <div class="card-links">
-                                <a href="#" target="_blank" rel="noopener" aria-label="GitHub 仓库">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15">
-                                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
-                                    </svg>
-                                </a>
-                                <a href="#" target="_blank" rel="noopener" aria-label="在线演示">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                                        <polyline points="15 3 21 3 21 9" />
-                                        <line x1="10" y1="14" x2="21" y2="3" />
-                                    </svg>
-                                </a>
+                <h2 class="section-title">近期项目</h2>
+                <div class="card-list">
+
+                    <article class="hcard reveal">
+                        <a class="hcard-thumb" href="#" tabindex="-1" aria-hidden="true">
+                            <span>NO IMAGE</span>
+                        </a>
+                        <div class="hcard-body">
+                            <div class="hcard-meta">
+                                <span class="tag">Vue 3</span>
+                                <span class="tag">FastAPI</span>
+                                <span class="tag">Docker</span>
+                            </div>
+                            <h3><a href="#">项目名称 A</a></h3>
+                            <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
+                            <div class="hcard-links">
+                                <a href="#" target="_blank" rel="noopener">GitHub ↗</a>
+                                <a href="#" target="_blank" rel="noopener">在线演示 ↗</a>
                             </div>
                         </div>
-                        <h3>项目名称 A</h3>
-                        <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
-                        <ul class="card-tags">
-                            <li>Vue 3</li>
-                            <li>FastAPI</li>
-                            <li>Docker</li>
-                        </ul>
                     </article>
-                    <article class="card reveal">
-                        <div class="card-top">
-                            <span class="card-icon">🛠️</span>
-                            <div class="card-links">
-                                <a href="#" target="_blank" rel="noopener" aria-label="GitHub 仓库">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15">
-                                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
-                                    </svg>
-                                </a>
+
+                    <article class="hcard reveal">
+                        <a class="hcard-thumb" href="#" tabindex="-1" aria-hidden="true">
+                            <span>NO IMAGE</span>
+                        </a>
+                        <div class="hcard-body">
+                            <div class="hcard-meta">
+                                <span class="tag">Python</span>
+                                <span class="tag">React</span>
+                                <span class="tag">PostgreSQL</span>
+                            </div>
+                            <h3><a href="#">项目名称 B</a></h3>
+                            <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
+                            <div class="hcard-links">
+                                <a href="#" target="_blank" rel="noopener">GitHub ↗</a>
                             </div>
                         </div>
-                        <h3>项目名称 B</h3>
-                        <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
-                        <ul class="card-tags">
-                            <li>Python</li>
-                            <li>React</li>
-                            <li>PostgreSQL</li>
-                        </ul>
                     </article>
-                    <article class="card reveal">
-                        <div class="card-top">
-                            <span class="card-icon">🌐</span>
-                            <div class="card-links">
-                                <a href="#" target="_blank" rel="noopener" aria-label="GitHub 仓库">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15">
-                                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
-                                    </svg>
-                                </a>
+
+                    <article class="hcard reveal">
+                        <a class="hcard-thumb" href="#" tabindex="-1" aria-hidden="true">
+                            <span>NO IMAGE</span>
+                        </a>
+                        <div class="hcard-body">
+                            <div class="hcard-meta">
+                                <span class="tag">TypeScript</span>
+                                <span class="tag">Node.js</span>
+                                <span class="tag">Nginx</span>
+                            </div>
+                            <h3><a href="#">项目名称 C</a></h3>
+                            <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
+                            <div class="hcard-links">
+                                <a href="#" target="_blank" rel="noopener">GitHub ↗</a>
                             </div>
                         </div>
-                        <h3>项目名称 C</h3>
-                        <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
-                        <ul class="card-tags">
-                            <li>TypeScript</li>
-                            <li>Node.js</li>
-                            <li>Nginx</li>
-                        </ul>
                     </article>
+
                 </div>
             </div>
         </section>
 
         <!-- ======= Articles ======= -->
-        <section id="articles" class="section reveal">
+        <section id="articles" class="section">
             <div class="container">
-                <h2 class="section-title">文章</h2>
-                <div class="article-list">
-                    <article class="article-card reveal">
-                        <div class="article-meta">
-                            <time>2026-04-01</time>
-                            <span class="article-tag">前端</span>
+                <h2 class="section-title">精选文章</h2>
+                <div class="card-list">
+
+                    <article class="hcard reveal">
+                        <a class="hcard-thumb" href="#" tabindex="-1" aria-hidden="true">
+                            <span>NO IMAGE</span>
+                        </a>
+                        <div class="hcard-body">
+                            <div class="hcard-meta">
+                                <span class="tag">前端</span>
+                                <time>2026-04-01</time>
+                                <span class="read-time">约 8 分钟</span>
+                            </div>
+                            <h3><a href="#">深入理解 Vue 3 响应式系统</a></h3>
+                            <p>从源码角度理解 Proxy 如何驱动 Vue 3 的响应式，以及与 Vue 2 的核心差异……</p>
                         </div>
-                        <h3><a href="#">深入理解 Vue 3 响应式系统</a></h3>
-                        <p>从源码角度理解 Proxy 如何驱动 Vue 3 的响应式，以及与 Vue 2 的核心差异……</p>
-                        <span class="read-time">约 8 分钟</span>
                     </article>
-                    <article class="article-card reveal">
-                        <div class="article-meta">
-                            <time>2026-03-15</time>
-                            <span class="article-tag">后端</span>
+
+                    <article class="hcard reveal">
+                        <a class="hcard-thumb" href="#" tabindex="-1" aria-hidden="true">
+                            <span>NO IMAGE</span>
+                        </a>
+                        <div class="hcard-body">
+                            <div class="hcard-meta">
+                                <span class="tag">后端</span>
+                                <time>2026-03-15</time>
+                                <span class="read-time">约 12 分钟</span>
+                            </div>
+                            <h3><a href="#">FastAPI 实战：构建高性能异步 API 服务</a></h3>
+                            <p>介绍如何利用 FastAPI + async/await 搭建生产级 API，包括依赖注入、错误处理与文档……</p>
                         </div>
-                        <h3><a href="#">FastAPI 实战：构建高性能异步 API 服务</a></h3>
-                        <p>介绍如何利用 FastAPI + async/await 搭建生产级 API，包括依赖注入、错误处理与文档……</p>
-                        <span class="read-time">约 12 分钟</span>
                     </article>
-                    <article class="article-card reveal">
-                        <div class="article-meta">
-                            <time>2026-02-28</time>
-                            <span class="article-tag">工程化</span>
+
+                    <article class="hcard reveal">
+                        <a class="hcard-thumb" href="#" tabindex="-1" aria-hidden="true">
+                            <span>NO IMAGE</span>
+                        </a>
+                        <div class="hcard-body">
+                            <div class="hcard-meta">
+                                <span class="tag">工程化</span>
+                                <time>2026-02-28</time>
+                                <span class="read-time">约 6 分钟</span>
+                            </div>
+                            <h3><a href="#">用 Docker Compose 搭建本地开发环境</a></h3>
+                            <p>通过实际项目案例，演示如何用 Docker Compose 统一管理前后端与数据库的本地环境……</p>
                         </div>
-                        <h3><a href="#">用 Docker Compose 搭建本地开发环境</a></h3>
-                        <p>通过实际项目案例，演示如何用 Docker Compose 统一管理前后端与数据库的本地环境……</p>
-                        <span class="read-time">约 6 分钟</span>
                     </article>
+
                 </div>
             </div>
         </section>
