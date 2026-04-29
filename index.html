@@ -1,16 +1,62 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Github Page demo</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
-    <script src="index.js"></script>
-</head>
-<body>
-    <div id="main-content">
+<html lang="zh-CN">
 
-    </div>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JK 个人网站</title>
+    <meta name="description" content="JK 的个人网站：个人介绍、项目与联系方式。">
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="brand">JK</div>
+            <nav class="site-nav" aria-label="主导航">
+                <a href="#about">关于我</a>
+                <a href="#skills">技能栈</a>
+                <a href="#projects">项目</a>
+                <a href="#timeline">时间线</a>
+                <a href="#contact">联系我</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <p class="tag">Hello, I'm</p>
+                <h1>江凯</h1>
+                <p class="subtitle">
+                    土木工程背景转软件开发，专注于把想法做成稳定、可用、可持续演进的产品。
+                </p>
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="#projects">查看项目</a>
+                    <a class="btn btn-secondary" href="#contact">联系合作</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="section">
+            <div class="container">
+                <h2>关于我</h2>
+                <p>
+                    你好，我是 JK，目前持续学习前后端开发与工程化实践。
+                    我喜欢用清晰的结构和可靠的代码解决真实问题，
+                    同时也注重文档、可维护性和团队协作效率。
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>© <span id="current-year"></span> JK. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="index.js"></script>
 </body>
+
 </html>
