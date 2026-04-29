@@ -4,55 +4,342 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>JK 个人网站</title>
-    <meta name="description" content="JK 的个人网站：个人介绍、项目与联系方式。">
+    <title>JK · 江凯 — 全栈工程师</title>
+    <meta name="description" content="江凯（JK）的个人网站：全栈开发、项目介绍与技术文章。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="main.css">
 </head>
 
 <body>
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursor-dot"></div>
+
+    <!-- ======= Header ======= -->
     <header class="site-header">
         <div class="container">
-            <div class="brand">JK</div>
+            <a href="#" class="brand" aria-label="回到顶部">
+                <span class="brand-jk">JK</span>
+                <span class="brand-line"></span>
+                <span class="brand-sub">FULLSTACK</span>
+            </a>
             <nav class="site-nav" aria-label="主导航">
-                <a href="#about">关于我</a>
-                <a href="#skills">技能栈</a>
-                <a href="#projects">项目</a>
-                <a href="#timeline">时间线</a>
-                <a href="#contact">联系我</a>
+                <a href="#about"><span class="nav-num">01</span>关于</a>
+                <a href="#skills"><span class="nav-num">02</span>技能</a>
+                <a href="#projects"><span class="nav-num">03</span>项目</a>
+                <a href="#articles"><span class="nav-num">04</span>文章</a>
+                <a href="#timeline"><span class="nav-num">05</span>历程</a>
+                <a href="#contact"><span class="nav-num">06</span>联系</a>
             </nav>
+            <button class="nav-toggle" aria-label="切换菜单" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </header>
 
     <main>
+        <!-- ======= Hero ======= -->
         <section class="hero">
+            <div class="hero-grid-bg" aria-hidden="true"></div>
             <div class="container">
-                <p class="tag">Hello, I'm</p>
-                <h1>江凯</h1>
-                <p class="subtitle">
-                    土木工程背景转软件开发，专注于把想法做成稳定、可用、可持续演进的产品。
-                </p>
-                <div class="hero-actions">
-                    <a class="btn btn-primary" href="#projects">查看项目</a>
-                    <a class="btn btn-secondary" href="#contact">联系合作</a>
+                <div class="hero-top">
+                    <span class="hero-coord">28°12'N / 112°58'E</span>
+                    <span class="hero-status">
+                        <span class="status-dot"></span>AVAILABLE FOR WORK
+                    </span>
+                </div>
+                <h1 class="hero-title">
+                    <span class="hero-name-row">
+                        <span class="hero-name-zh">江</span>
+                        <span class="hero-name-en">JIANG</span>
+                    </span>
+                    <span class="hero-divider" aria-hidden="true"></span>
+                    <span class="hero-name-row hero-name-row--right">
+                        <span class="hero-name-en">KAI</span>
+                        <span class="hero-name-zh">凯</span>
+                    </span>
+                </h1>
+                <div class="hero-bottom">
+                    <div class="hero-desc">
+                        <p class="hero-role">全栈工程师 / FULLSTACK ENGINEER</p>
+                        <p class="subtitle">土木狗毕业，程序员生涯总结</p>
+                    </div>
+                    <div class="hero-cta">
+                        <div class="hero-actions">
+                            <a class="btn btn-primary" href="#projects">查看项目</a>
+                            <a class="btn btn-ghost" href="#contact">联系合作</a>
+                        </div>
+                        <div class="hero-socials">
+                            <a href="https://github.com/jiangkai002" target="_blank" rel="noopener" aria-label="GitHub">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                                </svg>
+                                GitHub
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section id="about" class="section">
+        <!-- ======= About ======= -->
+        <section id="about" class="section reveal">
             <div class="container">
-                <h2>关于我</h2>
-                <p>
-                    你好，我是 JK，目前持续学习前后端开发与工程化实践。
-                    我喜欢用清晰的结构和可靠的代码解决真实问题，
-                    同时也注重文档、可维护性和团队协作效率。
-                </p>
+                <div class="section-header">
+                    <span class="section-num">01</span>
+                    <h2 class="section-title">关于我 <em>ABOUT</em></h2>
+                </div>
+                <div class="about-grid">
+                    <div class="about-avatar" aria-hidden="true">
+                        <span>JK</span>
+                        <div class="avatar-ring"></div>
+                    </div>
+                    <div class="about-body">
+                        <ul class="about-tags">
+                            <li>🏗️ 土木背景转型开发</li>
+                            <li>⚙️ 全栈工程实践</li>
+                            <li>📝 技术文章写作</li>
+                            <li>🤝 开源社区参与</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======= Skills ======= -->
+        <section id="skills" class="section section-alt reveal">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-num">02</span>
+                    <h2 class="section-title">技能栈 <em>SKILLS</em></h2>
+                </div>
+                <div class="skill-groups">
+                    <div class="skill-group reveal">
+                        <h3 class="skill-group-title">/ 前端</h3>
+                        <ul class="chips">
+                            <li>HTML / CSS</li>
+                            <li>JavaScript</li>
+                            <li>TypeScript</li>
+                            <li>Vue 3</li>
+                            <li>React</li>
+                        </ul>
+                    </div>
+                    <div class="skill-group reveal">
+                        <h3 class="skill-group-title">/ 后端</h3>
+                        <ul class="chips">
+                            <li>Python</li>
+                            <li>FastAPI</li>
+                            <li>Node.js</li>
+                            <li>SQL</li>
+                            <li>RESTful API</li>
+                        </ul>
+                    </div>
+                    <div class="skill-group reveal">
+                        <h3 class="skill-group-title">/ 工程 & 工具</h3>
+                        <ul class="chips">
+                            <li>Git</li>
+                            <li>Docker</li>
+                            <li>Linux</li>
+                            <li>CI/CD</li>
+                            <li>Nginx</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======= Projects ======= -->
+        <section id="projects" class="section reveal">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-num">03</span>
+                    <h2 class="section-title">项目介绍 <em>PROJECTS</em></h2>
+                </div>
+                <div class="cards">
+                    <article class="card card-project reveal">
+                        <div class="card-num">001</div>
+                        <div class="card-top">
+                            <span class="card-icon">🚀</span>
+                            <div class="card-links">
+                                <a href="#" target="_blank" rel="noopener" aria-label="GitHub 仓库">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                                    </svg>
+                                </a>
+                                <a href="#" target="_blank" rel="noopener" aria-label="在线演示">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                        <polyline points="15 3 21 3 21 9" />
+                                        <line x1="10" y1="14" x2="21" y2="3" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                        <h3>项目名称 A</h3>
+                        <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
+                        <ul class="card-tags">
+                            <li>Vue 3</li>
+                            <li>FastAPI</li>
+                            <li>Docker</li>
+                        </ul>
+                    </article>
+                    <article class="card card-project reveal">
+                        <div class="card-num">002</div>
+                        <div class="card-top">
+                            <span class="card-icon">🛠️</span>
+                            <div class="card-links">
+                                <a href="#" target="_blank" rel="noopener" aria-label="GitHub 仓库">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                        <h3>项目名称 B</h3>
+                        <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
+                        <ul class="card-tags">
+                            <li>Python</li>
+                            <li>React</li>
+                            <li>PostgreSQL</li>
+                        </ul>
+                    </article>
+                    <article class="card card-project reveal">
+                        <div class="card-num">003</div>
+                        <div class="card-top">
+                            <span class="card-icon">🌐</span>
+                            <div class="card-links">
+                                <a href="#" target="_blank" rel="noopener" aria-label="GitHub 仓库">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                        <h3>项目名称 C</h3>
+                        <p>这里是项目的简短描述，介绍解决了什么问题、用了哪些技术、有什么亮点。</p>
+                        <ul class="card-tags">
+                            <li>TypeScript</li>
+                            <li>Node.js</li>
+                            <li>Nginx</li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======= Articles ======= -->
+        <section id="articles" class="section section-alt reveal">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-num">04</span>
+                    <h2 class="section-title">技术文章 <em>WRITING</em></h2>
+                </div>
+                <div class="article-list">
+                    <article class="article-card reveal">
+                        <div class="article-meta">
+                            <time>2026-04-01</time>
+                            <span class="article-tag">前端</span>
+                        </div>
+                        <h3><a href="#">文章标题：深入理解 Vue 3 响应式系统</a></h3>
+                        <p>从源码角度理解 Proxy 如何驱动 Vue 3 的响应式，以及与 Vue 2 的核心差异……</p>
+                        <span class="read-time">阅读约 8 分钟</span>
+                    </article>
+                    <article class="article-card reveal">
+                        <div class="article-meta">
+                            <time>2026-03-15</time>
+                            <span class="article-tag">后端</span>
+                        </div>
+                        <h3><a href="#">FastAPI 实战：构建高性能异步 API 服务</a></h3>
+                        <p>介绍如何利用 FastAPI + async/await 搭建生产级 API，包括依赖注入、错误处理与文档……</p>
+                        <span class="read-time">阅读约 12 分钟</span>
+                    </article>
+                    <article class="article-card reveal">
+                        <div class="article-meta">
+                            <time>2026-02-28</time>
+                            <span class="article-tag">工程化</span>
+                        </div>
+                        <h3><a href="#">用 Docker Compose 搭建本地开发环境</a></h3>
+                        <p>通过实际项目案例，演示如何用 Docker Compose 统一管理前后端与数据库的本地环境……</p>
+                        <span class="read-time">阅读约 6 分钟</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======= Timeline ======= -->
+        <section id="timeline" class="section reveal">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-num">05</span>
+                    <h2 class="section-title">时间线 <em>JOURNEY</em></h2>
+                </div>
+                <ol class="timeline">
+                    <li class="timeline-item reveal">
+                        <div class="timeline-content">
+                            <span class="timeline-year">2026</span>
+                            <h3>持续成长</h3>
+                            <p>深耕全栈开发，探索更多工程化与架构实践，保持输出技术文章。</p>
+                        </div>
+                    </li>
+                    <li class="timeline-item reveal">
+                        <div class="timeline-content">
+                            <span class="timeline-year">2024</span>
+                            <h3>转型软件开发</h3>
+                            <p>系统性学习前后端开发，完成多个个人项目，开始建立技术栈。</p>
+                        </div>
+                    </li>
+                    <li class="timeline-item reveal">
+                        <div class="timeline-content">
+                            <span class="timeline-year">2022</span>
+                            <h3>接触编程</h3>
+                            <p>从土木工程行业接触到编程与自动化，发现对软件开发的热情。</p>
+                        </div>
+                    </li>
+                    <li class="timeline-item reveal">
+                        <div class="timeline-content">
+                            <span class="timeline-year">2018</span>
+                            <h3>土木工程</h3>
+                            <p>完成土木工程专业学习，积累了严谨的工程思维与系统分析能力。</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- ======= Contact ======= -->
+        <section id="contact" class="section section-alt reveal">
+            <div class="container contact-wrap">
+                <div class="section-header">
+                    <span class="section-num">06</span>
+                    <h2 class="section-title">联系我 <em>CONTACT</em></h2>
+                </div>
+                <p class="contact-desc">有项目合作想法、技术交流，或只是想打个招呼？欢迎联系。</p>
+                <div class="contact-links">
+                    <a class="contact-btn" href="mailto:your@email.com">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <rect x="2" y="4" width="20" height="16" rx="2" />
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                        </svg>
+                        发送邮件
+                    </a>
+                    <a class="contact-btn" href="https://github.com/jiangkai002" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.341-3.369-1.341-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                        </svg>
+                        GitHub
+                    </a>
+                </div>
             </div>
         </section>
     </main>
 
+    <!-- ======= Footer ======= -->
     <footer class="site-footer">
         <div class="container">
-            <p>© <span id="current-year"></span> JK. All rights reserved.</p>
+            <span>© <span id="current-year"></span> JIANG KAI / 江凯</span>
+            <span class="footer-sep">—</span>
+            <span>Built with pure HTML / CSS / JS</span>
         </div>
     </footer>
 
