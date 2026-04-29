@@ -2,9 +2,10 @@
    Design Tokens
 =================================================== */
 :root {
-  --bg: #0e0e0e;
-  --surface: #161616;
-  --surface-2: #1e1e1e;
+  --bg-body: #040404;
+  --bg: #111111;
+  --surface: #181818;
+  --surface-2: #202020;
 
   --text: #eeebe4;
   --text-dim: #9a968e;
@@ -19,7 +20,7 @@
 
   --font-display: 'Bebas Neue', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
-  --font-zh: 'Noto Serif SC', serif;
+  --font-zh: 'Microsoft YaHei', '微软雅黑', sans-serif;
 
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --radius: 4px;
@@ -41,11 +42,28 @@ html {
 
 body {
   font-family: var(--font-mono);
-  background: var(--bg);
+  background: var(--bg-body);
   color: var(--text);
   line-height: 1.7;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  left: 50%;
+  width: min(820px, 100%);
+  transform: translateX(-50%);
+  background: var(--bg);
+  border-left: 1px solid rgba(238, 235, 228, 0.07);
+  border-right: 1px solid rgba(238, 235, 228, 0.07);
+  box-shadow:
+    -32px 0 80px rgba(0, 0, 0, 0.55),
+     32px 0 80px rgba(0, 0, 0, 0.55);
+  z-index: -1;
+  pointer-events: none;
 }
 
 a {
@@ -78,7 +96,7 @@ img, svg {
   z-index: 100;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  background: rgba(14, 14, 14, 0.9);
+  background: rgba(17, 17, 17, 0.92);
   border-bottom: 1px solid var(--border);
 }
 
@@ -236,11 +254,12 @@ img, svg {
 .card {
   background: var(--bg);
   padding: 1.6rem 1.8rem;
-  transition: background var(--transition);
+  transition: background var(--transition), box-shadow var(--transition);
 }
 
 .card:hover {
   background: var(--surface);
+  box-shadow: inset 0 0 0 1px rgba(238, 235, 228, 0.07);
 }
 
 .card-top {
