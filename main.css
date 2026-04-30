@@ -142,6 +142,12 @@ img, svg {
 .hero {
   padding: 6rem 0 5rem;
   text-align: center;
+  min-height: calc(100vh - 52px);
+  display: flex;
+  align-items: center;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.42)),
+    url("assets/background.jpg") center / cover no-repeat;
 }
 
 .hero-title-row {
@@ -166,7 +172,7 @@ img, svg {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.22em;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.72);
   margin-bottom: 1.2rem;
 }
 
@@ -175,7 +181,7 @@ img, svg {
   font-size: clamp(6rem, 18vw, 10rem);
   line-height: 0.88;
   letter-spacing: 0.04em;
-  color: var(--text);
+  color: #ffffff;
   animation: name-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -186,7 +192,7 @@ img, svg {
 
 .hero-bio {
   font-size: 0.95rem;
-  color: var(--text-dim);
+  color: rgba(255, 255, 255, 0.84);
   margin-bottom: 2rem;
   animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
 }
