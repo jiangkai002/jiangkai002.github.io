@@ -152,14 +152,14 @@ img, svg {
 
 .hero-title-row {
   display: flex;
-  align-items: flex-end;
+  align-items: baseline;
   justify-content: center;
   gap: 1.2rem;
   margin-bottom: 0;
 }
 
 .hero-avatar {
-  height: calc(clamp(6rem, 18vw, 10rem) * 0.88);
+  height: 8rem;
   width: auto;
   aspect-ratio: 1;
   border-radius: 50%;
@@ -178,7 +178,7 @@ img, svg {
 
 .hero-name {
   font-family: var(--font-display);
-  font-size: clamp(6rem, 18vw, 10rem);
+  font-size: 12rem;
   line-height: 0.88;
   letter-spacing: 0.04em;
   color: #ffffff;
@@ -232,7 +232,7 @@ img, svg {
 =================================================== */
 .section-title {
   font-family: var(--font-body);
-  font-size: 0.72rem;
+  font-size: 3rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -381,6 +381,108 @@ img, svg {
 }
 
 /* ===================================================
+   Article Page
+=================================================== */
+.article-page {
+  padding: 5rem 0;
+}
+
+.article-content {
+  width: min(760px, 92%);
+  margin: 0 auto;
+}
+
+.article-header {
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 3rem;
+}
+
+.article-back {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  transition: color var(--transition);
+}
+
+.article-back:hover {
+  color: var(--text);
+}
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.article-meta time {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.article-header h1 {
+  font-size: clamp(2.2rem, 7vw, 4.6rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin-bottom: 1.2rem;
+}
+
+.article-header p {
+  font-size: 1rem;
+  color: var(--text-dim);
+}
+
+.article-content section {
+  margin-bottom: 3rem;
+}
+
+.article-content h2 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+}
+
+.article-content p {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+
+.article-content ul {
+  padding-left: 1.2rem;
+  margin: 1rem 0;
+}
+
+.article-content li {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-bottom: 0.55rem;
+}
+
+.article-content pre {
+  background: #161616;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  padding: 1rem;
+  margin: 1.2rem 0;
+}
+
+.article-content code {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.article-content pre code {
+  color: #eeeeee;
+  line-height: 1.7;
+}
+
+/* ===================================================
    Footer
 =================================================== */
 .site-footer {
@@ -435,5 +537,13 @@ img, svg {
 
   .nav-github {
     display: none;
+  }
+
+  .article-page {
+    padding: 3.5rem 0;
+  }
+
+  .article-header {
+    margin-bottom: 2rem;
   }
 }

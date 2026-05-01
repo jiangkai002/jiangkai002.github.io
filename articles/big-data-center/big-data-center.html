@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>大数据中心技术架构与建设实践 · JK</title>
+    <meta name="description" content="从数据接入、存储计算、治理、安全、服务化和运维角度，梳理大数据中心的建设方法。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../main.css">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a href="../../index.html" class="brand" aria-label="回到首页">JK</a>
+            <nav class="site-nav" aria-label="主导航">
+                <a href="../../index.html#projects">项目</a>
+                <a href="../../index.html#articles">文章</a>
+            </nav>
+            <a class="nav-github" href="https://github.com/jiangkai002" target="_blank" rel="noopener">
+                GitHub ↗
+            </a>
+        </div>
+    </header>
+
+    <main class="article-page">
+        <article class="article-content">
+            <header class="article-header">
+                <a class="article-back" href="../../index.html#articles">← 返回文章列表</a>
+                <div class="article-meta">
+                    <span class="tag">大数据</span>
+                    <span class="tag">数据中台</span>
+                    <span class="tag">架构设计</span>
+                    <time>2026-05-01</time>
+                    <span class="read-time">约 10 分钟</span>
+                </div>
+                <h1>大数据中心技术架构与建设实践</h1>
+                <p>
+                    大数据中心不是简单地把数据集中存起来，而是围绕数据采集、治理、计算、服务和运营建立一套可持续演进的数据基础设施。
+                </p>
+            </header>
+
+            <section>
+                <h2>1. 什么是大数据中心</h2>
+                <p>
+                    大数据中心可以理解为组织级的数据基础设施。它把业务系统、日志系统、物联网设备、第三方接口和人工录入数据统一接入，通过标准化治理和计算加工，形成可查询、可分析、可复用的数据资产。
+                </p>
+                <p>
+                    它的价值不在于“数据量大”，而在于让数据能够被稳定地生产、理解、追踪和使用。一个建设良好的大数据中心，应该同时服务业务分析、经营决策、实时监控、算法训练和对外数据服务。
+                </p>
+            </section>
+
+            <section>
+                <h2>2. 总体架构</h2>
+                <p>
+                    大数据中心通常可以拆成六层：数据源层、数据接入层、存储计算层、数据治理层、数据服务层和应用层。
+                </p>
+                <pre><code>业务系统 / IoT / 日志 / 第三方接口
+        ↓
+数据接入：批处理、实时流、CDC、API 同步
+        ↓
+存储计算：数据湖、数仓、湖仓一体、离线计算、实时计算
+        ↓
+数据治理：元数据、质量、血缘、权限、标准
+        ↓
+数据服务：指标 API、数据集市、报表、标签、特征服务
+        ↓
+业务应用：驾驶舱、BI、风控、推荐、运营分析</code></pre>
+                <p>
+                    这套架构的重点是分层，而不是堆技术组件。每一层都要有清晰边界：数据从哪里来、经过哪些加工、最终服务谁、出现问题如何追踪。
+                </p>
+            </section>
+
+            <section>
+                <h2>3. 数据接入</h2>
+                <p>
+                    数据接入决定了后续数据质量的上限。常见接入方式包括数据库同步、日志采集、消息队列、文件上传、接口拉取和设备数据上报。
+                </p>
+                <p>
+                    批量数据适合按小时或按天同步，例如订单、账务、主数据；实时数据适合通过 Kafka、Pulsar 或其他消息系统流入，例如用户行为、设备状态、告警事件；数据库变更可以通过 CDC 捕获，减少全量抽取带来的压力。
+                </p>
+                <ul>
+                    <li>数据来源系统和负责人</li>
+                    <li>同步频率和延迟要求</li>
+                    <li>主键、时间字段和分区策略</li>
+                    <li>字段含义、单位和枚举值</li>
+                    <li>失败重试、补数和告警机制</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>4. 存储与计算</h2>
+                <p>
+                    大数据中心的存储通常会采用分层模型。原始层保留未加工数据，明细层做清洗和标准化，汇总层沉淀公共指标，应用层面向具体业务场景。
+                </p>
+                <pre><code>ODS：原始数据层，尽量保留源系统原貌
+DWD：明细数据层，完成清洗、去重、标准化
+DWS：汇总数据层，沉淀公共主题和通用指标
+ADS：应用数据层，服务报表、接口和具体业务应用</code></pre>
+                <p>
+                    计算体系可以同时包含离线和实时两条链路。离线链路适合复杂聚合、历史回溯和成本敏感场景；实时链路适合监控大屏、实时风控、设备告警和在线特征更新。
+                </p>
+                <p>
+                    选型时不要只看性能，还要考虑团队能力、运维复杂度、数据规模和使用场景。对于中小规模团队，稳定、可维护、容易排错往往比技术栈更“先进”重要。
+                </p>
+            </section>
+
+            <section>
+                <h2>5. 数据治理</h2>
+                <p>
+                    没有治理的大数据中心很容易变成“数据仓库垃圾场”。表越来越多、指标口径不一致、字段没人敢删、问题没人负责，最终业务方还是回去找源系统导 Excel。
+                </p>
+                <ul>
+                    <li>元数据管理：知道有哪些表、字段、任务、接口和负责人。</li>
+                    <li>数据质量：监控空值、重复值、波动、延迟和枚举异常。</li>
+                    <li>数据血缘：能追踪一个指标从哪些源表加工而来。</li>
+                    <li>指标口径：统一收入、订单数、活跃用户等核心指标定义。</li>
+                    <li>权限安全：按角色、部门、数据等级控制访问范围。</li>
+                </ul>
+                <p>
+                    治理不是一次性项目，而是长期运营机制。每新增一条数据链路，都应该同时补齐元数据、质量规则、权限和负责人。
+                </p>
+            </section>
+
+            <section>
+                <h2>6. 数据服务化</h2>
+                <p>
+                    数据中心最终要把数据交付出去。常见交付方式有 BI 报表、数据 API、数据集市、标签服务、特征服务和文件导出。
+                </p>
+                <p>
+                    对于高频使用的数据，建议不要让业务系统直接查底层明细表，而是通过服务层提供稳定接口。这样可以隔离底层表结构变化，也方便做缓存、限流、权限控制和访问审计。
+                </p>
+                <pre><code>{
+  "metric": "daily_active_users",
+  "date": "2026-05-01",
+  "filters": {
+    "channel": "web",
+    "city": "shanghai"
+  }
+}</code></pre>
+                <p>
+                    接口返回的不只是数值，还应该包含口径说明、统计时间、数据更新时间和异常状态。数据服务的可信度，往往来自这些细节。
+                </p>
+            </section>
+
+            <section>
+                <h2>7. 运维与监控</h2>
+                <p>
+                    大数据任务链路长，任何一个环节失败都可能影响下游报表和业务决策。因此运维能力必须从一开始设计进去，而不是等出问题后再补。
+                </p>
+                <ul>
+                    <li>任务是否按时开始和结束</li>
+                    <li>数据量是否异常波动</li>
+                    <li>分区是否缺失</li>
+                    <li>实时消费是否堆积</li>
+                    <li>关键接口是否超时</li>
+                    <li>质量规则是否触发</li>
+                    <li>成本和资源使用是否失控</li>
+                </ul>
+                <p>
+                    告警要分级。不是所有任务失败都需要半夜叫醒人，但核心经营指标、实时告警链路和对外数据接口必须有明确的响应机制。
+                </p>
+            </section>
+
+            <section>
+                <h2>8. 建设路线</h2>
+                <p>
+                    大数据中心不建议一开始就追求“大而全”。更现实的路线是先选一个高价值场景做闭环，例如经营分析、设备监控或用户行为分析。
+                </p>
+                <p>
+                    第一阶段先打通数据接入、基础清洗和报表展示；第二阶段沉淀公共指标、质量规则和数据目录；第三阶段再建设实时链路、数据服务和算法特征；第四阶段推动跨部门的数据资产运营。
+                </p>
+                <p>
+                    衡量建设是否成功，也不应该只看接入了多少张表，而要看业务方是否真的用它做决策、发现问题和提升效率。
+                </p>
+            </section>
+
+            <section>
+                <h2>9. 总结</h2>
+                <p>
+                    大数据中心的本质是工程体系加组织协作。技术上要解决采集、存储、计算、治理和服务化；管理上要解决口径、责任、流程和数据资产运营。
+                </p>
+                <p>
+                    如果从零开始，可以先坚持三个原则：数据链路可追踪、核心指标有口径、关键任务有监控。只要这三件事做好，大数据中心就不会只是一个“数据堆放地”，而会逐步变成真正支撑业务增长的数据底座。
+                </p>
+            </section>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <span>© <span id="current-year"></span> JK · 江凯</span>
+        </div>
+    </footer>
+
+    <script src="../../index.js"></script>
+</body>
+
+</html>
