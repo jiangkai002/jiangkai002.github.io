@@ -105,7 +105,7 @@ img, svg {
 
 .site-nav {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
 .site-nav a {
@@ -125,7 +125,7 @@ img, svg {
 
 .nav-github {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 1rem;
   letter-spacing: 0.04em;
   color: var(--text-muted);
   padding: 0.3rem 0;
