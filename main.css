@@ -482,6 +482,94 @@ img, svg {
   line-height: 1.7;
 }
 
+/* ── Markdown 渲染正文（.article-body）额外元素 ── */
+.article-body h2 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin: 2.2rem 0 0.9rem;
+}
+
+.article-body h3 {
+  font-size: 1.05rem;
+  line-height: 1.4;
+  margin: 1.8rem 0 0.7rem;
+  color: var(--text-dim);
+}
+
+.article-body p {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+
+.article-body ul,
+.article-body ol {
+  padding-left: 1.3rem;
+  margin: 1rem 0;
+}
+
+.article-body li {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+
+.article-body pre {
+  background: #161616;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  padding: 1rem 1.2rem;
+  margin: 1.4rem 0;
+}
+
+.article-body pre code {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: #eeeeee;
+  line-height: 1.7;
+}
+
+.article-body :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: rgba(238, 235, 228, 0.08);
+  border: 1px solid var(--border-mid);
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  color: var(--amber);
+}
+
+.article-body a {
+  color: var(--text);
+  border-bottom: 1px solid var(--border-mid);
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.article-body a:hover {
+  color: var(--amber);
+  border-bottom-color: var(--amber);
+}
+
+.article-body blockquote {
+  margin: 1.5rem 0;
+  padding: 0.8rem 1.2rem;
+  border-left: 3px solid var(--red);
+  background: rgba(232, 52, 28, 0.05);
+  color: var(--text-dim);
+  font-size: 0.92rem;
+}
+
+.article-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2.5rem 0;
+}
+
+.article-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* ===================================================
    Footer
 =================================================== */
