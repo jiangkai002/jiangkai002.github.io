@@ -19,7 +19,24 @@ description: 针对 Revit 等 BIM 软件导出模型面数冗余、缺乏拓扑�
 
 <a href="http://kns--cnki--net--https.cnki.mdjsf.utuvpn.utuedu.com:9000/kcms2/article/abstract?v=5qKCSu-RHigH6BsxKLP7CAVqcaJ5ky_0eyu4np0ZHMqDOA1PPsK95Q78CYoojlf-qyJJH9MYYeicCjmuiP-AQn4XGbWBhrgZygojJRC8SCN1-NZ0w1RYzB3lgxYiJ7phnrupY_Yc_NT7_Le9jwjoa9BYLSBQBL5m0FmARg1hHcnD2q_9WUb4dQ==&uniplatform=NZKPT" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">论文链接</a>
 
-<img src="foil-article.png" alt="轻量化BIM模型的数据集成和模型交互方法研究" style="width:100%;border-radius:4px;">
+<img src="./image/foil-article.png" alt="轻量化BIM模型的数据集成和模型交互方法研究" style="width:100%;border-radius:4px;">
 
-## 技术细节
-核心出图方法经过了三代的技术，从Unity到Bimface到现在的Unreal
+## 项目展示
+
+
+## 出图渲染
+<img src="./image/history.png" alt="历史效果" style="width:100%;border-radius:4px;">
+
+核心出图方法经过了三代的技术，从Unity到Bimface到现在的Unreal，前两者已经是历史，目前
+由于业务逻辑展示模型是按照 **“楼层-系统-方向”**来展示不同的建筑模型、管线模型和设备模型，所以前置就是需要在渲染每一张图的时候将当前的对应模型加以显示并隐藏掉其余的模型，这部分可以通过不同图形引擎的脚本实现。
+
+### unity:
+发的官方
+
+### unreal:
+官方会更好
+
+
+## 交互逻辑
+
+
