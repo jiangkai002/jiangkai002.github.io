@@ -81,7 +81,10 @@
     renderMeta(meta);
 
     const bodyEl = document.getElementById('article-body');
-    if (bodyEl) bodyEl.innerHTML = marked.parse(body);
+    if (bodyEl) {
+      bodyEl.innerHTML = marked.parse(body);
+      if (window.Prism) Prism.highlightAllUnder(bodyEl);
+    }
 
   } catch (err) {
     const bodyEl = document.getElementById('article-body');

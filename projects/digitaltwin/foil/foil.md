@@ -1,7 +1,7 @@
 ---
 title: 超轻量化二维BIM模型展示
 data: 2026-5-6
-tags: [数字孪生,模型轻量化]
+tags: [数字孪生, 模型轻量化]
 description: 针对 Revit 等 BIM 软件导出模型面数冗余、缺乏拓扑优化的问题，采用预渲染切片方案：在服务端对 BIM 模型进行多视角离线渲染，生成瓦片图集，再借助 OpenLayers 在浏览器端实现高性能加载与交互，在零人工减面的前提下显著降低前端渲染压力。
 ---
 
@@ -23,20 +23,80 @@ description: 针对 Revit 等 BIM 软件导出模型面数冗余、缺乏拓扑�
 
 ## 项目展示
 
-
 ## 出图渲染
+
 <img src="./image/history.png" alt="历史效果" style="width:100%;border-radius:4px;">
 
 核心出图方法经过了三代的技术，从Unity到Bimface到现在的Unreal，前两者已经是历史，目前
 由于业务逻辑展示模型是按照 **“楼层-系统-方向”**来展示不同的建筑模型、管线模型和设备模型，所以前置就是需要在渲染每一张图的时候将当前的对应模型加以显示并隐藏掉其余的模型，这部分可以通过不同图形引擎的脚本实现。
 
+ 输出的json格式如下：
+```json
+ {
+    "type": "FeatureCollection",
+    "PassRate": "总数：596,成功数量：596,失败数量：0,成功率：100%",
+    "camPostion": [
+        91.9562382974267,
+        211.199053243684,
+        153.5665040387687
+    ],
+    "camUp": [
+        -0.41266446011203317,
+        0.812045902957566,
+        -0.41266147730346153
+    ],
+    "camRight": [
+        -0.7071067811864888,
+        -2.5973483524788232e-06,
+        0.7071067811818357
+    ],
+    "camSize": 143.84092934573374,
+    "features": [
+        {
+            "TestFeedback": "Succeeded",
+            "TestElementId": "elementid-8846454",
+            "type": "Feature",
+            "id": "device-209",
+            "properties": {
+                "name": "PAU-03-01"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    []
+                ]
+            }
+        },]
+ }
+ ```
+ 其中
+
+- `type` 固定为 `FeatureCollection`，整体遵循 GeoJSON 的组织方式，方便前端直接按要素集合读取。
+- `PassRate` 用来记录本次轮廓计算的成功率，主要用于离线生成阶段排查模型、设备或脚本异常。
+- `camPostion`、`camUp`、`camRight`、`camSize` 保存当前渲染相机的信息。前端并不需要真实还原三维相机，但需要利用这些参数把模型空间中的轮廓点映射到二维图片坐标中。
+- `features` 是真正的业务要素列表，每一个 `Feature` 对应一个设备、管线或构件。`properties` 保存业务字段，`geometry.coordinates` 保存该对象在当前视角下投影后的二维轮廓。
+
+也就是说，每一次离线出图并不是只生成一张静态图片，而是同时生成一份与图片严格对齐的索引数据。图片负责展示，JSON 负责交互。前端点选设备时，实际命中的不是三维模型，而是这份二维轮廓数据；业务系统再通过 `id` 或 `TestElementId` 反查对应设备详情。
+
+这一点是整个方案能成立的关键：**把三维问题提前压缩成二维问题**。三维模型只在服务端渲染阶段短暂参与计算，浏览器端最终面对的是瓦片图片、二维多边形和少量业务属性，因此加载速度和交互复杂度都能控制在 Web 项目可接受的范围内。
+
 ### unity:
-发的官方
+
+unity的核心脚本包含以下几类：
+
+- `PhotoManager/PhotoAllManager.cs`：拍摄基础设施，负责相机、Layer、角度切换和公共方法。
+- `PhotoManager/PhotoGameObjectViewManager.cs`：CSV 模型管线，按楼层和机电系统批量出图，并生成完整设备轮廓。
+- `PhotoManager/PhotoElementViewManager.cs`：运行时 Element 管线，按 ActiveElement 数据切换楼层和系统出图。
+- `CorePhoto/TestRenderTexture.cs`：真正执行 8K 离屏截图。
+- `CorePhoto/BoundInView.cs`：根据 Mesh 顶点计算当前视角下的取景范围。
+- `CoreOutline/OutLineTool-DESKTOP.cs`：把 CSV 设备列表转换成轮廓 JSON。
+- `CoreOutline/Mesh2DTask.cs`：Mesh 到二维轮廓点的核心算法。
+- `CoreOutline/GEOFeatureCollectionP.cs`、`CoreOutline/GEOFeatureCollection.cs`：JSON 输出结构。
+
+其中最关键的设计是：不要直接依赖 Unity Game 视图分辨率，也不要通过大量 `SetActive` 管理复杂模型的显隐，而是把“业务可见性”和“渲染可见性”分开。业务层先决定要拍哪些对象，渲染层统一通过 Layer 和相机 `cullingMask` 控制最终进图内容。
 
 ### unreal:
+
 官方会更好
 
-
 ## 交互逻辑
-
-
