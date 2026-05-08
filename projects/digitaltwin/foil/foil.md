@@ -28,7 +28,9 @@ description: 针对 Revit 等 BIM 软件导出模型面数冗余、缺乏拓扑�
 <img src="./image/history.png" alt="历史效果" style="width:100%;border-radius:4px;">
 
 核心出图方法经过了三代的技术，从Unity到Bimface到现在的Unreal，前两者已经是历史，目前
-由于业务逻辑展示模型是按照 **“楼层-系统-方向”**来展示不同的建筑模型、管线模型和设备模型，所以前置就是需要在渲染每一张图的时候将当前的对应模型加以显示并隐藏掉其余的模型，这部分可以通过不同图形引擎的脚本实现。
+由于业务逻辑展示模型是按照 **“楼层-系统-方向”**来展示不同的建筑模型、管线模型和设备模型，每一张图片的命名格式为 **{buildingId}-{floorId}-{systemName}-{direction}**
+所以前置就是需要在渲染每一张图的时候将当前的建筑、楼层以及相应系统的机电模型对应模型加以显示，将Camera设置为对应方向
+并隐藏掉其余的模型，这部分可以通过不同图形引擎的脚本实现。
 
 输出的json格式如下：
 
@@ -235,8 +237,72 @@ foreach (var typeId in systemIds.Keys)
 
 这里可以看到图片和轮廓 JSON 是同一轮相机状态下生成的，因此 JSON 中的二维轮廓可以和 PNG 对齐。
 
+#### 8K离屏渲染
+
+Unity 默认 Game 视图并不适合稳定输出 8K 图。项目使用 `RenderTexture` 离屏渲染：先创建 `8192 x 8192` 的 RT，把它绑定到相机 `targetTexture`，调用 `cam.Render()`，再用 `Texture2D.ReadPixels` 读回并编码为 PNG。
+
+```csharp
+public void TakePhoto(string LogName)
+{
+    rt = new RenderTexture(8192, 8192, 24);
+    cam.targetTexture = rt;
+    cam.Render();
+    RenderTexture.active = rt;
+
+    TextureFormat textureFormat = TextureFormat.RGBA32;
+    Texture2D tex = new Texture2D(8192, 8192, textureFormat, false);
+    tex.ReadPixels(new Rect(0,0, 8192, 8192),0,0);
+    tex.Apply();
+    cam.targetTexture = null;
+
+    byte[] bytes;
+    string suffix = ".png";
+    bytes = tex.EncodeToPNG();
+    File.WriteAllBytes(LogName+suffix,bytes);
+
+    Destroy(tex);
+    RenderTexture.active = null;
+    GameObject.Destroy(rt);
+    rt = null;
+}
+```
+
 ### unreal:
 
-官方会更好
+Unreal 后续成为主要方案，核心原因是它对工程软件模型的接入更友好。通过 **Datasmith**，Revit、3dMax等软件中的模型层级、材质和基础属性可以相对完整地导入 Unreal。虽然原始材质直接渲染出来并不一定美观，有时甚至有点辣眼睛，但它显著降低了 BIM 模型进入实时渲染管线的门槛。因此，后续的模型客户端和离线出图流程都逐步转向 Unreal。
+
+Unreal 版本没有继续沿用自定义离屏截图脚本，而是改为基于 **Movie Render Queue** 做离线出图。MRQ 本身就是 Unreal 官方提供的高质量渲染管线，能够更稳定地处理高分辨率输出、抗锯齿、后处理、序列帧管理和批量任务，相比自己维护一套截图逻辑，可靠性和可配置性都更好。
+
+8K 输出主要依赖 MRQ 中的 **High Resolution Rendering**。普通一次性渲染 8192×8192 图像时，显存压力会非常大，尤其是 BIM 模型本身面数高、材质多、场景层级复杂，很容易出现渲染失败、显存溢出或输出不稳定的问题。High Resolution Rendering 的思路是把一张大图拆成多个 tile 分块渲染，最后再由 Unreal 合成为完整图片。
+
+当前一般将 Tile Count 设置为 `4`，也就是把最终画面拆成 `4 × 4 = 16` 个 tile 分块渲染。这样每次实际渲染的区域更小，单次显存占用明显降低，同时仍然可以得到完整的 8K 输出结果。
+
+在这套流程里，Unreal 主要负责三件事：
+
+- 根据业务组合切换当前需要展示的楼层、系统和方向。
+- 通过 Movie Render Queue 输出对应视角下的高分辨率图片。
+- 保证每张图片的相机位置、正交尺寸、命名规则和后续瓦片切分脚本保持一致。
+
+相比 Unity 方案，Unreal 的优势不只是画质更好，更重要的是把高分辨率出图交给官方渲染队列处理。后续无论是调整分辨率、抗锯齿、采样质量、后处理效果，还是扩展批量渲染任务，都可以通过 MRQ 配置完成，不需要频繁修改底层截图代码。
+
+这部分批量出图的自动化逻辑主要通过 Python 脚本串联：脚本负责切换楼层、系统和相机方向，调用 MRQ 渲染任务，并按约定的命名规则输出图片，方便后续瓦片切分和前端加载。
+
+#### MRQ中的Actor组织
+
+Unreal中的构件，应该叫Actor的显隐并不是很好做，虽然将父Actor设置为在游戏中隐藏，但是子actor并不会对应隐藏，所以对于这种情况
+
+## 获取设备边界
+
+如果只有图片，页面最终只能停留在“查看模型”的层面，用户看到的是一张被渲染好的二维结果，却无法知道每一个设备、管线或构件在图中的具体位置，也无法继续承载点选、查询和业务联动。
+
+因此，在生成模型图片的同时，还需要为图中的关键对象生成一份对应的边界数据。图片负责视觉展示，边界数据负责说明“哪些区域属于哪个对象”。有了这层数据之后，前端才能把一张静态图片还原成可交互的业务界面。
+
+这部分数据主要服务于三类能力：
+
+- **设备点选**：用户点击图中的某个区域时，可以识别出对应的设备或构件。
+- **信息联动**：选中对象后，可以展示名称、编号、状态、所属系统等业务信息。
+- **状态表达**：后续可以根据设备状态，在对应区域上叠加高亮、报警、定位等视觉反馈。
+
+也就是说，设备边界并不是额外的展示素材，而是二维化方案中最关键的交互索引。它把离线渲染得到的图片和真实业务对象重新关联起来，让浏览器端不需要加载三维模型，也能完成接近数字孪生客户端的点选和联动体验。
 
 ## 交互逻辑
