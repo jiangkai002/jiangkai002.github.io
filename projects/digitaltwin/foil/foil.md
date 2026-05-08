@@ -271,7 +271,9 @@ public void TakePhoto(string LogName)
 
 Unreal 后续成为主要方案，核心原因是它对工程软件模型的接入更友好。通过 **Datasmith**，Revit、3dMax等软件中的模型层级、材质和基础属性可以相对完整地导入 Unreal。虽然原始材质直接渲染出来并不一定美观，有时甚至有点辣眼睛，但它显著降低了 BIM 模型进入实时渲染管线的门槛。因此，后续的模型客户端和离线出图流程都逐步转向 Unreal。
 
-Unreal 版本没有继续沿用自定义离屏截图脚本，而是改为基于 **Movie Render Queue** 做离线出图。MRQ 本身就是 Unreal 官方提供的高质量渲染管线，能够更稳定地处理高分辨率输出、抗锯齿、后处理、序列帧管理和批量任务，相比自己维护一套截图逻辑，可靠性和可配置性都更好。
+Unreal 版本没有继续沿用自定义离屏截图脚本，而是改为基于 **Movie Render Queue** 做离线出图。MRQ 本身就是 Unreal 官方提供的高质量渲染管线，能够更稳定地处理高分辨率输出、抗锯齿、后处理、序列帧管理和批量任务，相比自己维护一套截图逻辑，可靠性和可配置性都更好。Unreal5.1之前的版本正交视图有bug，所以要以正交视图输出图片的话需要使用**Unreal5.4及以上**。
+
+<img src="image/unrealQueue.png" style="width:100%;border-radius:4px;">
 
 8K 输出主要依赖 MRQ 中的 **High Resolution Rendering**。普通一次性渲染 8192×8192 图像时，显存压力会非常大，尤其是 BIM 模型本身面数高、材质多、场景层级复杂，很容易出现渲染失败、显存溢出或输出不稳定的问题。High Resolution Rendering 的思路是把一张大图拆成多个 tile 分块渲染，最后再由 Unreal 合成为完整图片。
 
@@ -287,10 +289,90 @@ Unreal 版本没有继续沿用自定义离屏截图脚本，而是改为基于 
 
 这部分批量出图的自动化逻辑主要通过 Python 脚本串联：脚本负责切换楼层、系统和相机方向，调用 MRQ 渲染任务，并按约定的命名规则输出图片，方便后续瓦片切分和前端加载。
 
-#### MRQ中的Actor组织
+MRQ的渲染设置如下：
+<img src="image/renderSetting.png" style="width:100%;border-radius:4px;">
 
-Unreal中的构件，应该叫Actor的显隐并不是很好做，虽然将父Actor设置为在游戏中隐藏，但是子actor并不会对应隐藏，所以对于这种情况
+#### MRQ 中的 Actor 组织
 
+在 Unreal 里直接做 Actor 显隐控制并不稳定：即使父 Actor 被设置为隐藏，子 Actor 也不一定会跟着隐藏。  
+所以这里没有走“逐层开关显隐”的路径，而是改成 **按帧控制位移**：
+
+- 每一帧对应一个业务组合：`{建筑}-{楼层}-{系统}`；
+- 当前帧需要展示的 Actor 保持原位；
+- 其余 Actor 在该帧被平移到远处（例如 X 轴减去 `100000`），等效于不参与渲染；
+- 帧号同时作为图片命名索引，渲染结果和业务索引天然一一对应。
+
+关键行如下：
+
+```python
+channel.add_key(unreal.FrameNumber(i), actor_pos.x - 100000)
+```
+
+完整的 Actor 轨道写入逻辑如下（示例）：
+```python
+def add_floor_models_to_sequence(
+    start_frame: int,
+    frame: int,
+    frame_count: int,
+    length: int,
+    floor_actor: unreal.Actor,
+):
+    level_sequence = unreal.get_editor_subsystem(unreal.LevelSequenceEditorSubsystem)
+    proxy: unreal.MovieSceneBindingProxy = level_sequence.add_actors([floor_actor])[0]
+    track = proxy.add_track(unreal.MovieScene3DTransformTrack)
+    section = track.add_section()
+    section.set_range(0, length + 1)
+    channels = section.get_all_channels()
+
+    actor_pos = floor_actor.get_actor_location()
+
+    def write_location_key(channel, frame_index: int, visible: bool):
+        if "Location.X" in channel.get_name():
+            channel.add_key(
+                unreal.FrameNumber(frame_index),
+                actor_pos.x if visible else actor_pos.x - 100000,
+            )
+        if "Location.Y" in channel.get_name():
+            channel.add_key(unreal.FrameNumber(frame_index), actor_pos.y)
+        if "Location.Z" in channel.get_name():
+            channel.add_key(unreal.FrameNumber(frame_index), actor_pos.z)
+
+    for channel in channels:
+        # 目标区间之前：隐藏
+        for i in range(start_frame, frame + start_frame):
+            write_location_key(channel, i, False)
+
+        # 目标区间内：显示
+        for i in range(frame + start_frame, frame + frame_count + start_frame):
+            write_location_key(channel, i, True)
+
+        # 目标区间之后：隐藏
+        for i in range(frame + frame_count + start_frame, length):
+            write_location_key(channel, i, False)
+```
+
+这种做法的本质是：用“空间换显隐”，把复杂层级关系转成确定性的时间轴控制，MRQ 批量渲染时稳定性会更好。
+
+Unreal 五个方向的相机参数如下：
+```python
+signs = [
+    [1, 1, 1.414],  # 右下
+    [1, -1, 1.414],  # 右上
+    [-1, -1, 1.414],  # 左上
+    [-1, 1, 1.414],  # 左下
+    [0, 0, 1.414],  # 正上
+]
+
+rotations = [
+    [0, -45, -135],  # 右下
+    [0, -45, 135],  # 右上
+    [0, -45, 45],  # 左上
+    [0, -45, -45],  # 左下
+    [0, -90, 90],  # 正上
+]
+```
+
+`signs` 用来控制相机相对目标中心点的偏移方向，`rotations` 则对应每个方向下的欧拉角设置。两者一一配对后，脚本就可以批量生成 `右下 / 右上 / 左上 / 左下 / 正上` 五个标准视角的渲染结果。
 
 ## 获取设备边界
 
