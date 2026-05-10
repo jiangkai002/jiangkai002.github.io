@@ -84,6 +84,7 @@
     if (bodyEl) {
       bodyEl.innerHTML = marked.parse(body);
       if (window.Prism) Prism.highlightAllUnder(bodyEl);
+      if (window.MathJax?.typesetPromise) MathJax.typesetPromise([bodyEl]);
     }
 
   } catch (err) {
