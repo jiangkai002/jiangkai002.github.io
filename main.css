@@ -538,6 +538,27 @@ img, svg {
   line-height: 1.7;
 }
 
+.article-body mjx-container[display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1.2rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.article-body mjx-container[display="true"] svg {
+  display: inline-block;
+}
+
+.article-body mjx-container:not([display="true"]) {
+  display: inline;
+}
+
+.article-body mjx-container:not([display="true"]) svg {
+  display: inline-block;
+  vertical-align: -0.15em;
+}
+
 .article-body :not(pre) > code {
   font-family: var(--font-mono);
   font-size: 0.82em;
