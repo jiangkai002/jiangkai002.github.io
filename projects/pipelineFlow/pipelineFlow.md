@@ -136,16 +136,278 @@ $\zeta$ 就是查询红宝书，即 **《实用供热空调设计手册第二版
 ### Revit插件
 
 <img src="images/0_image.png" style="width:100%">
-
-Revit插件的总体逻辑差不多就是
-
 <img src="images/1_1_image.png" style="width:100%">
 <div style="display:flex; gap:0px; align-items:flex-start;">
   <img src="images/1_2_image.png" style="width:50%">
   <img src="images/1_3_image.png" style="width:50%">
 </div>
 
+---
 
+项目通过 `IExternalApplication` 接口在 Revit 功能区注册了 8 个命令按钮：
 
+```csharp
+application.CreateRibbonTab("管道阻力计算");
+_panel = application.CreateRibbonPanel("管道阻力计算", "管道阻力计算");
+CreatePushButton("MatchElement", "匹配族", "match");
+CreatePushButton("GetConnection", "获取连接(单模型)", "connect");
+CreatePushButton("GetLoopResult", "获取回路", "loop");
+CreatePushButton("ExportExcel", "导出计算书", "Excel");
+```
 
+核心工作流为：**获取连接 → 匹配族类型 → 划分回路 → 水力计算 → 导出 Excel**。
 
+#### 拓扑关系建模
+
+##### 图数据模型
+
+拓扑建模的第一步，是把 Revit MEP 模型中的连接关系转换成程序可以遍历的图结构。这里以 Connector 为基础，将管件、风口、风机等构件抽象为节点 `ElementConnectionNode`，将风管抽象为边 `ElementConnection`，最终构造一张无向图。
+
+```csharp
+public class ElementConnection : IEdge<ElementConnectionNode>
+{
+    public string Guid { get; set; }          // 管道唯一标识
+    public double Width { get; set; }          // 矩形风管宽度
+    public double Height { get; set; }         // 矩形风管高度
+    public double Length { get; set; }         // 管段长度
+    public ElementConnectionNode Source { get; set; }
+    public ElementConnectionNode Target { get; set; }
+}
+```
+
+在这个结构里，`Source` 和 `Target` 表示风管两端连接的构件节点，`Width`、`Height`、`Length` 则保留后续阻力计算需要用到的基础参数。
+
+##### DFS 路径搜索
+
+图结构建立完成后，就可以利用 `GraphFunc.FindPathsFromNode` 从风机节点出发，通过 DFS 遍历所有可能的风路，直到到达每个风口末端。每一条搜索结果都对应一条从风机到风口的计算路径。
+
+```csharp
+private static void DFS(UndirectedGraph<ElementConnectionNode, ElementConnection> graph,
+    ElementConnectionNode currentNode, ...)
+{
+    if (currentNode.Category == "风道末端" || currentNode.Type == "风口")
+        nodes.Add(new List<ElementConnectionNode>(currentPath));
+
+    foreach (var edge in graph.AdjacentEdges(currentNode))
+    {
+        var neighbor = edge.Source.Guid == currentNode.Guid ? edge.Target : edge.Source;
+        DFS(graph, neighbor, visited, ...);
+    }
+}
+```
+
+这样处理之后，原本需要人工在图纸上追踪的风管路径，就被转换成了图上的路径搜索问题。后续风量汇总、最不利路径判断和阻力累加，都可以基于这些路径结果继续计算。
+
+---
+
+#### 设备树与回路划分
+
+##### 从路径构建设备树
+
+DFS 得到的是一组从风机到风口的路径集合，但计算时还需要知道这些路径之间的共享关系、父子关系以及分支位置。因此，程序会通过 `GenerateTree.GetTree` 将所有路径合并成一棵以风机为根节点的设备树 `DeviceTree`。
+
+设备树中的每个节点使用 `ElementNode` 表示，节点中会记录当前构件的父子关系、连接风管、风量、族映射名称等信息。这样做的目的，是把“多条路径”进一步整理成“一个完整系统”，方便后续识别主管、支管、分支点和回路分段。
+
+```csharp
+rootNode = new ElementNode()
+{
+    IsRoot = true,
+    ChildrenNodeIds = new List<string>(),
+    PipelineIds = new List<string>(),
+    NodeId = firstNode.Guid,
+    FamilyMappingName = firstNode.Type ?? firstNode.FamilyName,
+};
+```
+
+##### 回路分段规则
+
+设备树建立后，`GenerateLoop.GetOnePathLoop` 会沿着设备树自下而上遍历，并根据规则自动拆分计算回路。回路拆分的核心目的，是把一条完整风路切成若干段计算单元，让每一段都具备相对稳定的管径、风量和阻力计算条件。
+
+当前主要有三类分段规则：
+
+- **管径变化**：当风管宽度或高度发生变化时，需要拆分为新的计算段。
+- **多分支**：当路径上出现多个下游分支时，需要在分支位置拆分。
+- **风口数量变化**：当下游风口数量发生变化时，对应风量也会变化，需要重新划分回路。
+
+```csharp
+List<ISplitLoopInterface> splitLoopRules = new List<ISplitLoopInterface>
+{
+    new DiameterChange(),
+    new MultipleLinks(),
+    new OutletNumberChange()
+};
+```
+
+通过这种方式，程序不再依赖人工判断“这一段算到哪里为止”，而是把回路划分规则显式写成策略类。后续如果要增加新的分段依据，也可以继续扩展新的 `ISplitLoopInterface` 实现。
+
+---
+
+#### 水力计算核心
+
+##### 公式封装
+
+水力计算相关公式统一封装在 `Formula` 类中。这样做的好处是计算过程不会散落在业务流程里，后续如果需要调整公式、替换参数来源或修正规范取值，只需要集中维护公式层。
+
+矩形风管的当量直径计算如下：
+
+```csharp
+public static double GetDiameter(double width, double height)
+    => 2 * width * height / (width + height);
+```
+
+雷诺数计算如下：
+
+```csharp
+public static double GetRenoCoefficient(double diameter, double flowVelocity)
+    => (diameter / 1000) * flowVelocity / (15.06 * Math.Pow(10, -6));
+```
+
+沿程摩阻系数 $\lambda$ 使用 Colebrook 公式求解。由于公式中 $\lambda$ 同时出现在等式两侧，程序里采用迭代方式计算，直到结果收敛：
+
+```csharp
+public static double GetResisCoefficient(double K, double Re, double de)
+{
+    double relativeRoughness = K / de;
+    double f = 1.0 / Math.Pow(-2 * Math.Log10(relativeRoughness / 3.71 + 6.9 / Re), 2);
+
+    for (int i = 0; i < maxIterations; i++)
+    {
+        double sqrtF = Math.Sqrt(f);
+        double g = 1.0 / sqrtF + 2 * Math.Log10(term1 + term2);
+        double df = -g / dgdf;
+        f += df;
+        if (Math.Abs(df) < tolerance) break;
+    }
+
+    return f;
+}
+```
+
+动压、局部损失和沿程损失则进一步组合成单个回路的阻力结果：
+
+```csharp
+public static double GetDynamicPressure(double density, double flowVelocity)
+    => density * Math.Pow(flowVelocity, 2) * 0.5;
+
+public static double GetLocalLoss(double dynamicPressure, List<ElementNode> nodes)
+    => dynamicPressure * resistanceCoefficient + localLoss;
+
+public static double GetRunLoss(double length, double unitSpecificFriction)
+    => length * unitSpecificFriction;
+```
+
+##### 回路计算流程
+
+`FlowLoopCal.Import` 负责对单个回路完成完整计算。它会依次计算当量直径、雷诺数、动压、单位比摩阻、局部损失和沿程损失，最后汇总为该回路的总阻力。
+
+```csharp
+var reno = Formula.GetRenoCoefficient(equivalentDiameter, flowVelocity);
+var dynamicPressure = Formula.GetDynamicPressure(density, flowVelocity);
+var unitSpecificFriction = Formula.GetUnitSpecificFriction_lambda(
+    FlowVelocity,
+    diameter,
+    pipeRoughness,
+    Reno,
+    1.2
+);
+var localLoss = Formula.GetLocalLoss(dynamicPressure, entity.Nodes);
+var runLoss = Formula.GetRunLoss(length, unitSpecificFriction);
+this.TotalLoss = localLoss + runLoss;
+```
+
+到这一层时，前面的拓扑分析已经把“应该算哪条路径、路径上有哪些管段和构件”整理好了，计算层只需要面向标准化后的回路对象执行公式即可。
+
+---
+
+#### 管件阻力系数查表
+
+##### 查表策略模式
+
+局部阻力系数的难点在于不同构件的查表条件并不统一。弯头、三通、变径管、消声器、天圆地方等构件对应的参数维度不同，有的要看宽高比，有的要看曲率半径，有的要看风量分配比例。
+
+因此程序通过 `GetNodeFricTable` 工厂类，将族映射名称路由到不同的查表实现。每一种构件只负责自己的参数提取和查表逻辑，主流程只需要按构件类型调用即可。
+
+```csharp
+_nodeTable = new Dictionary<string, IPipeNode>
+{
+    {"弯头", new Elbow()},
+    {"三通", new ThreeLink()},
+    {"矩形变径管", new RectangularReducer()},
+    {"消声器", new Muffler()},
+    {"天圆地方", new CircularToRectangularTransitionPipe()},
+    ...
+};
+```
+
+##### 弯头查表示例
+
+以 `Elbow` 为例，程序会先从 Revit 构件参数中提取尺寸信息，再根据宽高比、曲率半径比等参数查询对应表格。如果查询点落在表格两个取值之间，则通过插值得到更接近实际工况的阻力系数。
+
+```csharp
+public override double GetTableValue(string deviceGuid, DeviceTree deviceTree, PathResult flowPath, int index)
+{
+    var radiusModifyValue = GetRadiusModifyValue(deviceTree, flowPath, index);
+    var transverseAxisValue = GetTransverseAxis(...);
+    var longitudinalAxisValue = GetLongitudinalAxis(...);
+    var value = InterpolationQuery.GetTwoDimensionsValue(
+        longitudinalAxisValue,
+        transverseAxisValue,
+        _tableDic
+    );
+
+    return Math.Round(radiusModifyValue * value, 2);
+}
+```
+
+##### 插值算法
+
+查表数据并不一定覆盖所有实际参数，因此 `InterpolationQuery` 实现了一维线性插值和二维双线性插值。二维表格查询时，会先在两个相邻行上分别做一维插值，再根据纵向比例做一次线性插值。
+
+```csharp
+public static double GetTwoDimensionsValue(
+    double y,
+    double x,
+    Dictionary<double, Dictionary<double, double>> tableDic
+)
+{
+    var value1 = GetSingleLineValue(x, tableDic[y_low]);
+    var value2 = GetSingleLineValue(x, tableDic[y_high]);
+    var proportion = (y - y_low) / (y_high - y_low);
+
+    return value1 + (value2 - value1) * proportion;
+}
+```
+
+这个设计把“不同构件怎么查表”和“表格中间值怎么插值”拆开处理，既能减少重复代码，也方便后续补充新的构件类型。
+
+---
+
+#### 结果导出
+
+计算完成后，结果需要形成工程师可以复核和归档的计算书。第一代插件中使用 NPOI 生成 Excel 文件，`ExportToExcel.ExportNew` 负责整体导出流程，`ComputingUnit` 负责单个回路的单元格排版和样式控制。
+
+```csharp
+CreateCellWithStyle("风量", row1, 1, _greyStyle);
+CreateCellWithStyle(loop.FlowRate, row1, 2, _centerStyle);
+CreateCellWithStyle("风速(m/s)", row6, 1, _greyStyle);
+CreateCellWithStyle(loop.FlowVelocity, row6, 2, _greenStyle);
+CreateCellWithStyle("总损失", row7, 9, _greyStyle);
+CreateCellWithStyle(loop.TotalLoss, row7, 10, _greenStyle);
+```
+
+最终导出的计算书会汇总各个回路的静压结果，并按默认放大系数进行修正。这样既保留了自动计算的效率，也方便设计人员按传统计算书格式进行复核。
+
+---
+
+#### 架构小结
+
+整体来看，PipelineFlow 的 Revit 插件部分可以拆成四层：
+
+- **拓扑层**：负责从 Revit Connector 构建图结构，并通过 DFS 搜索风机到风口的路径，核心类包括 `GraphFunc`、`ElementConnection`。
+- **建模层**：负责把路径集合整理成设备树，并根据规则拆分计算回路，核心对象包括 `DeviceTree`、`GenerateLoop` 和各类分段规则。
+- **计算层**：负责水力学公式、沿程阻力、局部阻力、查表和插值，核心类包括 `Formula`、`FlowLoopCal`、`GetNodeFricTable`。
+- **输出层**：负责将计算结果导出为 Excel 计算书，核心类包括 `ExportToExcel`、`ComputingUnit`。
+
+这个架构的核心价值，是把原本依赖人工经验的风管核算流程拆成可编程的几个步骤：从模型读取连接关系，用图算法识别路径，再用规则划分回路，最后自动完成公式计算、查表插值和结果导出。它真正解决的并不是某一个公式的计算问题，而是从 Revit 模型到阻力计算书的端到端自动化。
+
+> 项目使用的主要依赖包括：Revit API、QuikGraph、NPOI、MathNet.Numerics 和 Newtonsoft.Json。
