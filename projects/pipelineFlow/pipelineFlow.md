@@ -107,6 +107,8 @@ $\zeta$ 就是查询红宝书，即 **《实用供热空调设计手册第二版
 
 ## 产品设计
 
+这个产品的设计，可以说没有设计，至少部门里面没有配专门的产品跟进，算是开发也就是我自己调研需求，自己设计产品，那我也算是真全栈了哈哈哈哈哈，
+
 #### Revit插件
 
 这个产品一共做过两代。第一代采用 Revit 插件的形式，目标是让深化设计人员在模型完成后直接在 Revit 内完成阻力计算，也就是“深化即计算”，不再需要先导出 CAD 图纸，再回到二维图纸里人工拆路径和统计参数。
@@ -130,3 +132,20 @@ $\zeta$ 就是查询红宝书，即 **《实用供热空调设计手册第二版
 <img src="images/webResult.png" style="width:100%">
 
 ## 架构设计
+
+### Revit插件
+
+<img src="images/0_image.png" style="width:100%">
+
+Revit插件的总体逻辑差不多就是
+
+<img src="images/1_1_image.png" style="width:100%">
+<div style="display:flex; gap:0px; align-items:flex-start;">
+  <img src="images/1_2_image.png" style="width:50%">
+  <img src="images/1_3_image.png" style="width:50%">
+</div>
+
+
+
+
+
