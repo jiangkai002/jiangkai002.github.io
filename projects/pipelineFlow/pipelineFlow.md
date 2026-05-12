@@ -397,6 +397,8 @@ CreateCellWithStyle(loop.TotalLoss, row7, 10, _greenStyle);
 
 最终导出的计算书会汇总各个回路的静压结果，并按默认放大系数进行修正。这样既保留了自动计算的效率，也方便设计人员按传统计算书格式进行复核。
 
+结果计算书如下：
+<img src="images/revitCalculateBook.png" style="width:100%">
 ---
 
 #### 架构小结
@@ -412,11 +414,385 @@ PipelineFlow 的 Revit 插件部分可以拆成四层：
 > 项目使用的主要依赖包括：Revit API、QuikGraph、NPOI、MathNet.Numerics 和 Newtonsoft.Json。
 
 ### Web架构的计算工具
+Web 端不是把 Revit 插件简单搬到浏览器里，而是把原本一次性的本地计算流程拆成了平台化的服务流程。图算法、设备树生成、回路划分和阻力计算这些核心算法与插件端基本一致，这里只一笔带过；重点看 Web 端新增的用户入口、模型数据入库、异步任务调度、结果持久化和外部服务集成。
+
+#### Web端整体分层
+
+项目是前后端同仓结构：后端是 ASP.NET Core 6 服务 `IBuildingCloud.PipelineFlow`，前端是 Vue 2 + TypeScript 应用 `ibuildingcloud-pipelineflow-app`。后端启动时会把前端路径、外部服务客户端、Redis、用户上下文和一组后台任务注册到容器中。
+
+```csharp
+BaseUrl = "pipelineflow";
+VuePath = "../ibuildingcloud-pipelineflow-app";
+
+services.AddSingleton(new ModelTaskClient(
+    Configuration.GetValue<string>("MODELTASK_URL"),
+    new HttpClient()
+));
+
+services.AddScoped<IRedisCacheService, RedisCacheService>();
+services.AddScoped<IUserContext, UserContext>();
+
+services.AddHostedService<ModelDataExtractService>();
+services.AddHostedService<ModelDataStoreService>();
+services.AddHostedService<BimfaceTranslateService>();
+services.AddHostedService<InitTableValue>();
+services.AddHostedService<CalculateNodePath>();
+services.AddHostedService<CalculateLoopService>();
+```
+
+这段注册基本能看出 Web 端的主干：`ModelTaskClient` 负责调用外部模型任务服务，`RedisCacheService` 负责缓存参数表，`BimfaceTranslateService`、`ModelDataExtractService`、`ModelDataStoreService` 负责把模型文件变成可计算数据，`CalculateNodePath` 和 `CalculateLoopService` 负责后续计算。
+
+从架构上可以拆成五层：
+
+- **前端交互层**：负责项目入口、Task 创建、模型上传、模型查看、映射配置、连接修复、计算触发和计算书展示。
+- **接口服务层**：通过 Controller 暴露任务、模型、路径、回路、计算书、参数表等 API，并复用平台 Auth 做项目权限校验。
+- **模型数据层**：把上传的 Revit 模型交给 BIMFACE 和 ModelTask 服务处理，再把提取出的连接点、连接关系、构件族、楼层等数据写入 MongoDB。
+- **计算调度层**：通过后台服务轮询任务状态，把路径搜索和阻力计算拆成可并发、可追踪的异步任务。
+- **存储与缓存层**：关系型数据库保存任务和文件等结构化数据，MongoDB 保存模型拓扑和计算结果，Redis 缓存高频参数表。
+
+---
+
+#### 前端任务入口
+
+插件端是“打开 Revit 模型后直接计算”，Web 端则先引入“项目”和“Task 计算任务”的概念。用户在前端创建 Task，同时上传一个或多个模型文件；前端提交完成后，后端先创建计算任务，再把文件地址提交到模型文件接口。
+
+```typescript
+let taskInputModel = new CalculateTaskInputModel({
+  name: this.formData.name,
+  description: this.formData.description,
+  createdTime: new Date().toISOString(),
+});
+let taskId = await api.CalculateTaskService.postCalculateTasks({
+  projectId: this.projectId,
+  body: taskInputModel,
+});
+
+let modelUploadInputModel = new ModelUploadInputModel({
+  taskId: taskId,
+  files: this.formData.fileUrls,
+});
+await api.ModelFileService.postModelfiles({
+  projectId: this.projectId,
+  taskId: taskId.toString(),
+  body: modelUploadInputModel,
+});
+```
+
+前端路由也围绕这个业务关系展开。后台页路径中同时带有 `projectId` 和 `taskId`，同一个 Task 下再挂模型管理、标高管理、模型映射、连接修复、计算书和参数表等功能页面。
+
+```typescript
+path: "/backstage/projects/:projectId/tasks/:taskId",
+children: [
+  { path: "models", component: () => import("../views/settings/ModelView.vue") },
+  { path: "floors", component: () => import("../views/settings/FloorSettings.vue") },
+  { path: "modelDataMatch", component: () => import("../views/settings/ModelDataMatch.vue") },
+  { path: "modelFix", component: () => import("../views/settings/ModelFix.vue") },
+  { path: "calculatebook", component: () => import("../views/settings/CalculateBook.vue") },
+  { path: "nodeTableSettings", component: () => import("../views/settings/NodeTableSettings.vue") },
+]
+```
+
+这样 Web 端的计算对象就不再是一次性的本地文件，而是一个可以被用户管理、持续更新和后续复核的 Task。
+
+---
+
+#### 用户与任务接口
+
+后端任务接口以项目为边界，接口路径中带 `projectId`，并通过 `ValidateToken(projectId)` 校验用户在项目中的访问权限。创建任务时会把当前用户写入输入模型，查询任务时也会按用户维度过滤。
+
+```csharp
+[ApiController]
+[Authorize]
+[Route("api/pipelineflow/projects/{projectId}/calculateTasks")]
+public class CalculateTaskController : ControllerBase
+{
+    [HttpGet]
+    public async Task<List<CalculateTaskViewModel>> GetCalculateTasks(int projectId, ...)
+    {
+        var token = this.ValidateToken(projectId);
+        var userId = token.Id;
+        return await _calculateTaskService.GetCalculateTasks(projectId, userId, ...);
+    }
+
+    [HttpPost]
+    public async Task<int> Post(int projectId, [FromBody] CalculateTaskInputModel value)
+    {
+        var token = this.ValidateToken(projectId);
+        value.UserId = token.Id;
+        return await _calculateTaskService.Add(projectId, value);
+    }
+}
+```
+
+`CalculateTask` 是用户创建的计算任务，`CalDeviceTask` 则是某个 Task 下按风机拆出来的设备计算任务。这个拆分很重要：一个项目可以有多个计算任务，一个计算任务可以上传多个模型，而真正执行路径和阻力计算时，是按风机设备粒度并发处理的。
+
+```csharp
+public class CalculateTask : IEntity
+{
+    public string TaskName { get; set; }
+    public int UserProjectId { get; set; }
+    public CalculateStatus Status { get; set; }
+    public bool HasConnectoinFixed { get; set; }
+    public string Guid { get; set; }
+    public int ProjectId { get; set; }
+}
+
+public class CalDeviceTask : IEntity
+{
+    public int TaskId { get; set; }
+    public string DeviceGuid { get; set; }
+    public int DeviceElementId { get; set; }
+    public CalculateRules CalculateRules { get; set; }
+    public CalculateDeviceStatus Status { get; set; }
+}
+```
+
+这一层解决的是插件端没有处理的问题：计算结果属于哪个用户、哪个项目、哪个计算任务，后续如何重新计算、查看、删除和共享。
+
+---
+
+#### 模型数据入库
+
+Web 端上传模型后，不直接在请求里完成解析，而是通过后台服务推进模型处理状态。`BimfaceTranslateService` 负责查询 BIMFACE 上传状态、发起转换并写回缩略图；`ModelDataExtractService` 负责向 ModelTask 服务提交“模型风阻回路提取”任务；`ModelDataStoreService` 在提取完成后，把 OSS 上的 JSON 数据导入 MongoDB。
+
+```csharp
+var filesToTranslate = await modelFiles.GetMany(0, x =>
+    (x.State & ModelStatus.上传到BIMFACE完成) > 0 &&
+    (x.State & ModelStatus.开始BIMFACE模型转换) == 0 &&
+    (x.State & ModelStatus.BIMFACE模型转换完成) == 0);
+
+foreach (var file in filesToTranslate)
+{
+    await bimFace.TranslateFile(file.Web3dUrl, file.Guid, file.UseBimTile);
+    await modelFiles.UpdateStatus(file.Id, ModelStatus.开始BIMFACE模型转换, true, "开始BIMFACE模型转换");
+}
+```
+
+```csharp
+await modelTasks.PostOrdertasksAsync(
+    new OrderTaskInfoInputModel
+    {
+        Guid = file.Guid,
+        OrderExeName = "模型风阻回路提取",
+        TaskName = "ConnectExtract" + file.Name,
+        RvtAddress = file.SourceUrl
+    });
+await modelFiles.UpdateStatus(file.Id, ModelStatus.开始模型数据提取, true, "开始模型数据提取");
+```
+
+数据真正入库的逻辑在 `ModelDataService.Import`。它从 OSS 读取 ModelTask 生成的 JSON，并把楼层、连接点、连接关系、Connector、构件族等信息补上 `ModelFileId`、`ProjectId` 和 `TaskId` 后写入 MongoDB。
+
+```csharp
+var elementConnectionNodes = await GetJson<ElementConnectionNode>(modelGuid, "PipeConnectionNode");
+elementConnectionNodes.ForEach(n =>
+{
+    n.ModelFileId = modelId;
+    n.ProjectId = projectId;
+    n.TaskId = taskId;
+    n.PositionX = n.Position[0];
+    n.PositionY = n.Position[1];
+    n.PositionZ = n.Position[2];
+});
+await nodeRepo.AddRange(elementConnectionNodes);
+
+var elementConnections = await GetJson<ElementConnection>(modelGuid, "PipeConnection");
+elementConnections.ForEach(c =>
+{
+    c.ModelFileId = modelId;
+    c.ProjectId = projectId;
+    c.TaskId = taskId;
+});
+await connectionRepo.AddRange(elementConnections);
+```
+
+这一步相当于把 Revit 插件里“从模型直接读 Connector”的过程，改造成了 Web 服务中的“模型文件 -> 外部提取任务 -> JSON -> MongoDB 拓扑数据”。
+
+---
+
+#### 设备任务生成
+
+模型拓扑数据入库后，系统需要找到哪些设备需要计算。`CalculateDeviceTaskService.GeneratePathTask` 会先检查当前启用模型组合是否发生变化，如果变化就重新修复连接关系；然后通过族映射找出被标记为“风机”的构件，并为每台风机创建或更新一个 `CalDeviceTask`。
+
+```csharp
+var modelFiles = await _modelFileRepo.GetMany(x => x.TaskId == taskId && x.IsActivated);
+var modelFileIds = modelFiles.Select(x => x.Id).ToList();
+var taskModelFileGuid = Utils.Utils.GenerateGuid(modelFileIds);
+if (!calculateTask.HasConnectoinFixed || calculateTask.Guid != taskModelFileGuid)
+{
+    await _repairConnectionService.RepairModelConnection(projectId, taskId);
+    calculateTask.HasConnectoinFixed = true;
+    calculateTask.Guid = taskModelFileGuid;
+    await _calculateTaskRepo.Update(taskId, calculateTask);
+}
+
+var fanFamilyNames = elementFamilies
+    .Where(x => x.MappingNodeName == "风机")
+    ?.Select(x => x.FamilyName)
+    .ToList() ?? new List<string>();
+
+var deviceNodes = await _nodeRepo.GetMany(x =>
+    x.ProjectId == projectId &&
+    x.TaskId == taskId &&
+    modelFileIds.Contains(x.ModelFileId) &&
+    fanFamilyNames.Contains(x.FamilyName));
+```
+
+如果风机已经存在对应任务，就重置为“开始获取风机路径”；如果是新风机，就创建新的设备任务；如果模型中已经不存在这台风机，则删除旧任务。这个设计让 Web 端可以支持模型反复上传、启用/停用和重新计算，而不用每次都从零开始人工整理。
+
+```csharp
+if (calTaskDeviceGuids.Contains(deviceNode.Guid))
+{
+    var taskToUpdate = existCalDeviceTasks.First(x => x.DeviceGuid == deviceNode.Guid);
+    taskToUpdate.Status = CalculateDeviceStatus.开始获取风机路径;
+    taskToUpdate.StartTime = DateTime.Now;
+    tasksToUpdate.Add(taskToUpdate);
+    continue;
+}
+
+var calculateDeviceTask = new CalDeviceTask();
+calculateDeviceTask.ProjectId = projectId;
+calculateDeviceTask.TaskId = taskId;
+calculateDeviceTask.DeviceGuid = deviceNode.Guid;
+calculateDeviceTask.DeviceElementId = deviceNode.ElementId;
+calculateDeviceTask.Status = CalculateDeviceStatus.开始获取风机路径;
+calculateDeviceTasks.Add(calculateDeviceTask);
+```
+
+---
+
+#### 路径计算与设备树
+
+路径计算使用后台轮询模型。`CalculateNodePath` 定时扫描状态为“开始获取风机路径”的设备任务，批量读取当前 Task 下启用模型的连接点和连接关系，并按任务分组缓存到内存中，随后并发处理每个设备任务。
+
+```csharp
+pendingTasks = await taskRepo.GetMany(x =>
+    (x.Status & CalculateDeviceStatus.开始获取风机路径) > 0 &&
+    (x.Status & CalculateDeviceStatus.获取风机路径完成) == 0 &&
+    (x.Status & CalculateDeviceStatus.正在进行获取风机路径) == 0 &&
+    (x.Status & CalculateDeviceStatus.获取风机路径失败) == 0);
+
+var modelFileIds = (await modelFileRepo.GetMany(x =>
+    taskIds.Contains(x.TaskId) && x.IsActivated))
+    .Select(x => x.Id)
+    .ToList();
+
+_elementConnectionNodes = (await nodeRepo.GetMany(x =>
+    modelFileIds.Contains(x.ModelFileId)))
+    .GroupBy(x => x.TaskId)
+    .ToDictionary(x => x.Key, x => x.ToList());
+```
+
+真正生成路径和设备树时，Web 端复用了插件端的核心思路：输入是连接点和连接关系，输出是 `PathResult` 和 `DeviceTree`。不同的是，Web 端把结果写回 MongoDB，并通过任务状态把计算过程暴露给前端。
+
+```csharp
+await pathResultRepo.DeleteWhere(x =>
+    x.ProjectId == deviceTask.ProjectId &&
+    x.TaskId == deviceTask.TaskId &&
+    x.DeviceGuid == deviceTask.DeviceGuid);
+
+await deviceTreeRepo.DeleteWhere(x =>
+    x.ProjectId == deviceTask.ProjectId &&
+    x.TaskId == deviceTask.TaskId &&
+    x.DeviceGuid == deviceTask.DeviceGuid);
+
+await deviceTreeService.GenerateDeviceTree(deviceTask, elementConnectionNodes, elementConnections);
+
+deviceTask.Status = CalculateDeviceStatus.获取风机路径完成;
+await taskRepo.Update(deviceTask.Id, deviceTask);
+```
+
+这里的架构重点不是路径算法本身，而是把路径计算变成了可以失败重试、可以并发执行、可以按风机追踪状态的后台任务。
+
+---
+
+#### 阻力计算与结果保存
+
+路径和设备树生成后，`CalculateLoopService` 会继续扫描“开始进行阻力计算”的设备任务。它从 MongoDB 中读取进风路径、出风路径、进风树、出风树，以及节点修正系数和阻力系数表，然后调用回路计算逻辑生成最终结果。
+
+```csharp
+pendingTasks = await taskRepo.GetMany(x =>
+    (x.Status & CalculateDeviceStatus.开始进行阻力计算) > 0 &&
+    (x.Status & CalculateDeviceStatus.获取风机路径失败) == 0);
+
+var inPaths = await pathResultRepo.GetMany(x =>
+    x.DeviceGuid == currentTask.DeviceGuid &&
+    x.ProjectId == currentTask.ProjectId &&
+    x.TaskId == currentTask.TaskId &&
+    x.Direction == PathDirection.In);
+
+var outPaths = await pathResultRepo.GetMany(x =>
+    x.DeviceGuid == currentTask.DeviceGuid &&
+    x.ProjectId == currentTask.ProjectId &&
+    x.TaskId == currentTask.TaskId &&
+    x.Direction == PathDirection.Out);
+```
+
+```csharp
+var getCommonLoop = new GetCommonLoop(
+    getNodeFricTable,
+    flowLoopCalRepo,
+    calDeviceTaskRepo,
+    nodeFixedCoefficientRepo,
+    airFlowPathService
+);
+
+getCommonLoop.inPath = inPaths;
+getCommonLoop.outPath = outPaths;
+getCommonLoop.deviceTreeIn = inTree;
+getCommonLoop.deviceTreeOut = outTree;
+getCommonLoop.CalDeviceTask = currentTask;
+
+await getCommonLoop.GetLoop();
+```
+
+这部分和 Revit 插件中的计算层高度相似，仍然是围绕路径、设备树、节点阻力系数和回路对象进行计算。Web 端的差异在于：计算过程通过 `CalDeviceTask.Status` 持续推进，计算结果以文档形式保存，前端可以随时读取并展示计算书、路径结果和回路阻力。
+
+---
+
+#### 参数表缓存
+
+插件端的参数表可以在本地单例中缓存，Web 端则把高频参数表放到 Redis。服务启动时，`InitTableValue` 从数据库读取节点参数表，并按管件名称写入 Redis Hash。
+
+```csharp
+var tables = await pipeNodeTableService.GetMany(0);
+foreach (var table in tables)
+{
+    await redisCacheService.HashSetAsync("PipelineFlowTable", table.PipeNodeName, table);
+}
+```
+
+阻力计算时再通过 `GetNodeFricTable` 根据构件映射名称选择具体查表策略。这一层的设计与插件端“管件类型 -> 查表类 -> 插值计算”的思路一致，只是数据来源从本地内存改成了服务端缓存。
+
+```csharp
+_nodeFactories = new Dictionary<string, Func<IPipeNode>>
+{
+    { "弯头", () => new Elbow(_getTableValueService, _connectorRepo) },
+    { "矩形弯头", () => new VerticalElbow(_getTableValueService, _connectorRepo) },
+    { "矩形变径管", () => new RectangularReducer(_getTableValueService, _connectorRepo) },
+    { "天圆地方", () => new CircularToRectangularTransitionPipe(_getTableValueService, _connectorRepo) },
+};
+```
+
+---
+
+#### Web架构小结
+
+PipelineFlow 的 Web 端可以拆成五层：
+
+- **入口层**：Vue 前端负责 Task 创建、模型上传、模型管理、映射配置、连接修复、计算触发和结果展示，核心页面包括 `Desktop`、`BackStage`、`ModelView`、`ModelDataMatch`、`ModelFix`、`CalculateBook`。
+- **接口层**：ASP.NET Core Controller 以 `projectId` 和 `taskId` 组织 API，核心接口包括 `CalculateTaskController`、`ModelFileController`、`CalDeviceTaskController`、`AirFlowPathController`、`FlowLoopCalController`。
+- **模型数据层**：`BimfaceTranslateService`、`ModelDataExtractService`、`ModelDataStoreService` 把上传模型转换为可计算的 MongoDB 拓扑数据，核心数据包括 `ElementConnectionNode`、`ElementConnection`、`ElementConnector`、`ElementFamily`。
+- **计算调度层**：`CalculateDeviceTaskService` 负责按风机生成设备任务，`CalculateNodePath` 负责路径和设备树，`CalculateLoopService` 负责回路和阻力计算。
+- **存储缓存层**：关系型数据库保存任务、模型文件和楼层等管理数据，MongoDB 保存模型拓扑与计算结果，Redis 缓存红宝书参数表。
+
+这个架构的核心价值，是把 Revit 插件中“本机模型读取 -> 即时计算 -> Excel 输出”的流程，改造成了“用户创建 Task -> 上传模型 -> 后台提取拓扑 -> 异步计算 -> Web 查看和归档”的平台流程。计算逻辑没有被推翻，但它被放进了一个更适合多人协作、结果追踪和服务化部署的系统里。
+
+
 
 
 
 ## 后话
 
-行业内常用的“红宝书”仍以 2008 年版本为主，其中不少数据来源于实验室条件。再叠加现场施工质量、材料偏差和安装误差等因素，理论计算结果与实际测量结果之间难免会存在差异。
+行业内常用的“红宝书”仍以 2008 年版本为主，说是要出第二版也是没有后续了，其中不少数据来源于早期的实验室条件。再叠加现场施工质量、材料偏差和安装误差等因素，理论计算结果与实际测量结果之间难免会存在差异。
 
 因此，这类计算工具的价值主要体现在两个方面：一是面对要求较高的业主时，可以快速出具相对规范的计算书；二是在现场风量不足、阻力偏大等问题出现时，工程团队可以用计算结果作为依据，推动业主或相关方调整风机选型。单从行业需求来看，它未必是一个特别强烈的刚需，但从程序开发的角度看，它是一次把工程经验、规范计算和 BIM 数据结合起来解决实际问题的数字化实践。至少这个项目代码是写爽了。
