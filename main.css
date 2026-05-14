@@ -136,6 +136,23 @@ img, svg {
   color: var(--text);
 }
 
+.visitor-badge {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.82;
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.visitor-badge:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.visitor-badge img {
+  height: 20px;
+  width: auto;
+}
+
 /* ===================================================
    Hero
 =================================================== */
@@ -654,6 +671,10 @@ img, svg {
   }
 
   .nav-github {
+    display: none;
+  }
+
+  .visitor-badge {
     display: none;
   }
 
