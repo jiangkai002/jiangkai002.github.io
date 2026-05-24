@@ -2,7 +2,7 @@
 title: 将现有.net微服务改造为Agent智能体
 data: 2026-5-24
 tags: [微服务，智能体，agent framework]
-description: 将现有的基于.net的微服务，利用微软的agent改造为智能体
+description: 基于 Microsoft Agent Framework，将现有 .NET 微服务通过 gRPC Tool 封装为可调用的 Agent 能力，并结合 MongoDB 实现多轮会话记忆，为 BIM 数据处理等业务场景提供自然语言交互入口。
 ---
 
 ## 背景
